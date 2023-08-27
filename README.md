@@ -1,5 +1,7 @@
 ## mini-js-sandbox
 
+沙箱原理：环境隔离，子应用 A 过来执行后，离开时要把环境恢复成原来的样子，不然当加载子应用 B 时，就会用到子应用 A 在全局留下的内容，从而造成环境污染。
+
 ### jsDOM测试环境准备
 
 如何测试使用浏览器API的代码呢？比如有一个 `storage`，可以通过指定 `type = 'indexedDB' | 'cookie' | 'localStorage'` 来切换存储的方式，而且还可以生成自定义的 `key`，防止全局污染。
@@ -62,3 +64,22 @@ module.exports = {
 `npx jest --init`
 
 自动生成了 `jest.config.js` 配置文件，里面有一些默认配置，可以根据需要修改。
+
+接下来我们在src目录下编写沙箱实现，在tests目录下编写测试用例。
+
+### 快照沙箱
+
+`qiankun` 的快照沙箱是基于 `diff` 来实现的，主要用于不支持 `window.Proxy` 的低版本浏览器。
+
+**用 `windowSnapshot` 来记录上一次 `window` 的环境，用 `modifiedMap` 来记录沙箱里的变更，以此作为恢复环境的依据。**
+
+进入沙箱时：
++ 存储原来的 window 快照信息到 windowSnapshot
++ 从 modifiyPropsMap 还原 window 对象
+
+离开沙箱时：
++ 对 windowSnapshot 和当前 window 对象进行 diff，变更的值存到 modifyPropsMap
++ 将 window 对象还原成 windowSnapshot
+
+
+
